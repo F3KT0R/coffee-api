@@ -1,7 +1,7 @@
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 puppeteer.use(StealthPlugin());
 
@@ -52,7 +52,7 @@ async function scrapeProductData(url) {
   const browser = await getBrowserInstance();
   const page = await browser.newPage();
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     await page.waitForSelector('.product-title', { timeout: 60000 });
     const data = await page.evaluate(() => {
       const title =
@@ -71,7 +71,7 @@ async function scrapeProductData(url) {
   }
 }
 
-export async function handler(event, context) {
+exports.handler = async function (event, context) {
   try {
     const urls = await fetchSitemapUrls();
     const scrapePromises = urls.map((url) => scrapeProductData(url));
@@ -90,4 +90,4 @@ export async function handler(event, context) {
       await browser.close();
     }
   }
-}
+};

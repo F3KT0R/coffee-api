@@ -1,0 +1,19 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Novi Bečej",
+			"country": {
+				"code": "RS",
+				"name": "Serbia"
+			},
+			"subdivision": {
+				"code": "VO",
+				"name": "Vojvodina"
+			},
+			"timezone": "Europe/Belgrade",
+			"latitude": 45.5931,
+			"longitude": 20.1306
+		},
+		"timestamp": 1723799495479
+	}
+}
