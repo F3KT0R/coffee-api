@@ -1,0 +1,8 @@
+[build]
+  command = "node index.js"
+  publish = "public"
+
+[[redirects]]
+  from = "/sitemap-urls"
+  to = "/.netlify/functions/sitemap-urls"
+  status = 200
