@@ -15,13 +15,12 @@ async function extractMetaData(url, type) {
       const html = response.data;
       const $ = cheerio.load(html);
 
-      const descriptionArray =
-        $('h3.text-title').text().toLowerCase().split(' ') || '';
+      const description = $('h3.text-title').text().toLowerCase() || '';
 
       const keywords = ['ground', 'beans'];
 
       const hasKeyword = keywords.some((keyword) =>
-        descriptionArray.includes(keyword)
+        description.includes(keyword)
       );
       if (!hasKeyword) {
         const pods =
