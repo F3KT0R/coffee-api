@@ -18,7 +18,7 @@ async function extractMetaData(url, type) {
       const descriptionArray =
         $('h3.text-title').text().toLowerCase().split(' ') || '';
 
-      const keywords = ['ground', 'bean'];
+      const keywords = ['ground', 'beans'];
 
       const hasKeyword = keywords.some((keyword) =>
         descriptionArray.includes(keyword)
