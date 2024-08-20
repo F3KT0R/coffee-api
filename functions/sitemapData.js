@@ -15,33 +15,43 @@ async function extractMetaData(url, type) {
       const html = response.data;
       const $ = cheerio.load(html);
 
-      const pods =
-        $('#product-attributes .attribute-label:contains("Number of pods")')
-          .next('.attribute-value')
-          .text() || '';
-      const title = $('meta[property="og:title"]').attr('content') || '';
-      const image = $('meta[property="og:image"]').attr('content') || '';
-      const price =
-        $('meta[property="product:price:amount"]').attr('content') || '';
+      const descriptionArray =
+        $('h3.text-title').text().toLowerCase().split(' ') || '';
 
-      const scriptContent = $('script:contains("parseProduct_")').html();
-      let sku = '';
-      if (scriptContent) {
-        const skuMatch = scriptContent.match(/"sku":"(\d+)"/);
-        if (skuMatch && skuMatch[1]) {
-          sku = skuMatch[1];
+      const keywords = ['ground', 'bean'];
+
+      const hasKeyword = keywords.some((keyword) =>
+        descriptionArray.includes(keyword)
+      );
+      if (!hasKeyword) {
+        const pods =
+          $('#product-attributes .attribute-label:contains("Number of pods")')
+            .next('.attribute-value')
+            .text() || '';
+        const title = $('meta[property="og:title"]').attr('content') || '';
+        const image = $('meta[property="og:image"]').attr('content') || '';
+        const price =
+          $('meta[property="product:price:amount"]').attr('content') || '';
+
+        const scriptContent = $('script:contains("parseProduct_")').html();
+        let sku = '';
+        if (scriptContent) {
+          const skuMatch = scriptContent.match(/"sku":"(\d+)"/);
+          if (skuMatch && skuMatch[1]) {
+            sku = skuMatch[1];
+          }
         }
-      }
 
-      return {
-        brand: title,
-        id: sku,
-        image,
-        pods,
-        price,
-        system: type,
-        url,
-      };
+        return {
+          brand: title,
+          id: sku,
+          image,
+          pods,
+          price,
+          system: type,
+          url,
+        };
+      }
     }
   } catch (error) {
     if (error.response && error.response.status === 429) {
