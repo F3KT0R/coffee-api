@@ -18,10 +18,10 @@ async function extractMetaData(url, type) {
       const description = $('h3.text-title').text().toLowerCase() || '';
 
       const keywords = ['ground', 'beans'];
-
       const hasKeyword = keywords.some((keyword) =>
         description.includes(keyword)
       );
+
       if (!hasKeyword) {
         const pods =
           $('#product-attributes .attribute-label:contains("Number of pods")')
@@ -112,6 +112,7 @@ exports.handler = async function (event, context) {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*', // Allow all origins, you can restrict this as needed
       },
       body: JSON.stringify({
         data: metaData.filter((data) => !!data),
@@ -123,6 +124,9 @@ exports.handler = async function (event, context) {
     console.error('Error fetching sitemap data:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
       body: 'Error fetching sitemap data',
     };
   }
