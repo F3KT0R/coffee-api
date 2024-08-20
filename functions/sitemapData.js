@@ -2,8 +2,11 @@ const axios = require('axios');
 const { XMLParser } = require('fast-xml-parser');
 const cheerio = require('cheerio');
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function extractMetaData(url, type) {
   try {
+    await delay(1000);
     if (url.toLowerCase().includes(type.toLowerCase())) {
       const response = await axios.get(url);
       const html = response.data;
@@ -26,8 +29,14 @@ async function extractMetaData(url, type) {
       return { url, brand: title, image, price, system: type, id: sku };
     }
   } catch (error) {
-    console.error(`Error fetching data from ${url}:`, error);
-    return { url, error: 'Could not retrieve data' };
+    if (error.response && error.response.status === 429) {
+      console.warn(`Rate limit hit, retrying after delay for ${url}`);
+      await delay(3000); // Wait for 3 seconds before retrying
+      return extractMetaData(url, type); // Retry the request
+    } else {
+      console.error(`Error fetching data from ${url}:`, error);
+      return { url, error: 'Could not retrieve data' };
+    }
   }
 }
 
@@ -41,6 +50,9 @@ exports.handler = async function (event, context) {
 
     const urlEntries = parsedSitemap.urlset.url;
     const urls = [];
+
+    const page = parseInt(event.queryStringParameters.page) || 1;
+    const pageSize = 150; // Adjust the size based on your needs
 
     urlEntries.forEach((entry) => {
       const loc = entry.loc;
@@ -58,8 +70,10 @@ exports.handler = async function (event, context) {
       }
     });
 
+    const paginatedUrls = urls.slice((page - 1) * pageSize, page * pageSize);
+
     // Extract metadata for each URL
-    const metaDataPromises = urls.map((url) =>
+    const metaDataPromises = paginatedUrls.map((url) =>
       extractMetaData(url, categoryFilter)
     );
     const metaData = await Promise.all(metaDataPromises);
