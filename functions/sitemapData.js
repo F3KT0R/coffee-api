@@ -15,6 +15,10 @@ async function extractMetaData(url, type) {
       const html = response.data;
       const $ = cheerio.load(html);
 
+      const pods =
+        $('#product-attributes .attribute-label:contains("Number of pods")')
+          .next('.attribute-value')
+          .text() || '';
       const title = $('meta[property="og:title"]').attr('content') || '';
       const image = $('meta[property="og:image"]').attr('content') || '';
       const price =
@@ -29,7 +33,15 @@ async function extractMetaData(url, type) {
         }
       }
 
-      return { url, brand: title, image, price, system: type, id: sku };
+      return {
+        brand: title,
+        id: sku,
+        image,
+        pods,
+        price,
+        system: type,
+        url,
+      };
     }
   } catch (error) {
     if (error.response && error.response.status === 429) {
