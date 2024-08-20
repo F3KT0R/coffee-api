@@ -2,11 +2,14 @@ const axios = require('axios');
 const { XMLParser } = require('fast-xml-parser');
 const cheerio = require('cheerio');
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
+// Function to extract metadata from a given URL
 async function extractMetaData(url, type) {
   try {
-    await delay(1000);
+    await delay(1000); // To avoid rate-limiting
     if (url.toLowerCase().includes(type.toLowerCase())) {
       const response = await axios.get(url);
       const html = response.data;
@@ -42,7 +45,13 @@ async function extractMetaData(url, type) {
 
 exports.handler = async function (event, context) {
   try {
-    const categoryFilter = event.queryStringParameters.category || 'All';
+    const queryParams = event.queryStringParameters || {};
+    const categoryFilter = queryParams.category || 'All';
+    const page = parseInt(queryParams.page) || 1;
+    const pageSize = 8;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = page * pageSize;
+
     const sitemapUrl = 'https://www.kaffekapslen.co.uk/sitemap/uk/sitemap.xml';
     const response = await axios.get(sitemapUrl);
     const parser = new XMLParser();
@@ -50,9 +59,6 @@ exports.handler = async function (event, context) {
 
     const urlEntries = parsedSitemap.urlset.url;
     const urls = [];
-
-    const page = parseInt(event.queryStringParameters.page) || 1;
-    const pageSize = 150; // Adjust the size based on your needs
 
     urlEntries.forEach((entry) => {
       const loc = entry.loc;
@@ -70,18 +76,27 @@ exports.handler = async function (event, context) {
       }
     });
 
-    const paginatedUrls = urls.slice((page - 1) * pageSize, page * pageSize);
+    const validUrls = urls.filter((url) =>
+      url.toLowerCase().includes(categoryFilter.toLowerCase())
+    );
 
-    // Extract metadata for each URL
+    // Pagination logic: only fetch the required range of URLs
+    const paginatedUrls = validUrls.slice(startIndex, endIndex);
     const metaDataPromises = paginatedUrls.map((url) =>
       extractMetaData(url, categoryFilter)
     );
     const metaData = await Promise.all(metaDataPromises);
-    const filteredMetaData = metaData.filter((data) => !!data);
 
     return {
       statusCode: 200,
-      body: JSON.stringify(filteredMetaData),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: metaData.filter((data) => !!data),
+        currentPage: page,
+        totalPages: Math.ceil(validUrls.length / pageSize),
+      }),
     };
   } catch (error) {
     console.error('Error fetching sitemap data:', error);
