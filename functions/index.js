@@ -1,15 +1,7 @@
-const express = require('express');
 const axios = require('axios');
 const { XMLParser } = require('fast-xml-parser');
 const cheerio = require('cheerio');
 
-const app = express();
-const port = 3001; // Change the port if needed
-
-const cors = require('cors');
-app.use(cors());
-
-// Function to extract metadata from a given URL
 async function extractMetaData(url, type) {
   try {
     if (url.toLowerCase().includes(type.toLowerCase())) {
@@ -39,10 +31,9 @@ async function extractMetaData(url, type) {
   }
 }
 
-// Fetch and parse the sitemap, then retrieve metadata
-app.get('/sitemap-data', async (req, res) => {
+exports.handler = async function (event, context) {
   try {
-    const categoryFilter = req.query.category || 'All';
+    const categoryFilter = event.queryStringParameters.category || 'All';
     const sitemapUrl = 'https://www.kaffekapslen.co.uk/sitemap/uk/sitemap.xml';
     const response = await axios.get(sitemapUrl);
     const parser = new XMLParser();
@@ -74,13 +65,15 @@ app.get('/sitemap-data', async (req, res) => {
     const metaData = await Promise.all(metaDataPromises);
     const filteredMetaData = metaData.filter((data) => !!data);
 
-    res.json(filteredMetaData);
+    return {
+      statusCode: 200,
+      body: JSON.stringify(filteredMetaData),
+    };
   } catch (error) {
     console.error('Error fetching sitemap data:', error);
-    res.status(500).send('Error fetching sitemap data');
+    return {
+      statusCode: 500,
+      body: 'Error fetching sitemap data',
+    };
   }
-});
-
-app.listen(port, () => {
-  console.log(`Sitemap parser app listening on port ${port}`);
-});
+};
