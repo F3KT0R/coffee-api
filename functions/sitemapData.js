@@ -16,13 +16,17 @@ async function extractMetaData(url, type) {
       const $ = cheerio.load(html);
 
       const description = $('h3.text-title').text().toLowerCase() || '';
+      let stockStatus = $('div p[title="Availability"] span')
+        .text()
+        .toLowerCase();
+      // .find('p[title="Availability"] span')
 
       const keywords = ['ground', 'beans'];
       const hasKeyword = keywords.some((keyword) =>
         description.includes(keyword)
       );
 
-      if (!hasKeyword) {
+      if (!hasKeyword && stockStatus.length == 0) {
         const pods =
           $('#product-attributes .attribute-label:contains("Number of pods")')
             .next('.attribute-value')
